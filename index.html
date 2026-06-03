@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>IRON MAN SUIT-UP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#000;
+  font-family:'Orbitron',monospace;
+  color:#00d4ff;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+#uploadScreen{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  width:100%;
+  background:radial-gradient(ellipse at center,#0a0005 0%,#000 70%);
+  gap:24px;
+}
+.logo{
+  font-size:clamp(18px,5vw,32px);
+  font-weight:900;
+  letter-spacing:0.3em;
+  color:#c8901a;
+  text-shadow:0 0 30px #c8901a,0 0 60px rgba(200,144,26,0.5);
+  text-align:center;
+}
+.sub{
+  font-size:11px;
+  letter-spacing:0.25em;
+  color:rgba(0,212,255,0.5);
+  text-align:center;
+}
+.drop-zone{
+  width:min(320px,85vw);
+  height:min(320px,50vh);
+  border:2px dashed rgba(0,212,255,0.4);
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:all 0.3s;
+  background:rgba(0,212,255,0.03);
+  gap:14px;
+  position:relative;
+  overflow:hidden;
+}
+.drop-zone::before{
+  content:'';
+  position:absolute;
+  inset:-2px;
+  background:conic-gradient(from 0deg,transparent,rgba(0,212,255,0.3),transparent,rgba(200,144,26,0.3),transparent);
+  border-radius:8px;
+  animation:rotateBorder 4s linear infinite;
+  z-index:-1;
+}
+@keyframes rotateBorder{to{transform:rotate(360deg);}}
+.drop-zone:hover{
+  border-color:#00d4ff;
+  background:rgba(0,212,255,0.07);
+  box-shadow:0 0 30px rgba(0,212,255,0.2);
+}
+.drop-zone .icon{font-size:56px;}
+.drop-zone p{
+  font-size:13px;
+  color:rgba(0,212,255,0.6);
+  letter-spacing:0.1em;
+  text-align:center;
+  line-height:1.6;
+}
+#fileInput{display:none;}
+.start-btn{
+  padding:14px 40px;
+  background:linear-gradient(135deg,#8b0000,#c0392b);
+  border:1px solid rgba(200,144,26,0.6);
+  color:#c8901a;
+  font-family:'Orbitron',monospace;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.25em;
+  cursor:pointer;
+  border-radius:4px;
+  transition:all 0.3s;
+  display:none;
+  text-transform:uppercase;
+}
+.start-btn:hover{
+  box-shadow:0 0 30px rgba(200,144,26,0.5);
+  transform:translateY(-2px);
+}
+
+/* ── Transformation Screen ── */
+#transformScreen{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:100;
+}
+#transformScreen canvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
+#statusBar{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:rgba(0,0,0,0.85);
+  border-top:1px solid rgba(0,212,255,0.2);
+  padding:10px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:200;
+  gap:12px;
+}
+#statusText{
+  font-size:10px;
+  letter-spacing:0.2em;
+  color:#00d4ff;
+  flex:1;
+}
+#progressWrap{
+  flex:2;
+  height:3px;
+  background:rgba(0,212,255,0.1);
+  border-radius:2px;
+  overflow:hidden;
+}
+#progressFill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#00d4ff,#c8901a);
+  box-shadow:0 0 8px #00d4ff;
+  transition:width 0.08s linear;
+  border-radius:2px;
+}
+#pctText{
+  font-size:11px;
+  color:rgba(200,144,26,0.8);
+  letter-spacing:0.1em;
+  min-width:38px;
+  text-align:right;
+}
+#saveBtn{
+  display:none;
+  padding:8px 16px;
+  background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.4);
+  color:#00d4ff;
+  font-family:'Orbitron',monospace;
+  font-size:9px;
+  letter-spacing:0.15em;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all 0.3s;
+  white-space:nowrap;
+}
+#saveBtn:hover{background:rgba(0,212,255,0.2);}
+#replayBtn{
+  display:none;
+  padding:8px 16px;
+  background:rgba(139,0,0,0.4);
+  border:1px solid rgba(200,144,26,0.4);
+  color:#c8901a;
+  font-family:'Orbitron',monospace;
+  font-size:9px;
+  letter-spacing:0.15em;
+  cursor:pointer;
+  border-radius:3px;
+  white-space:nowrap;
+}
+</style>
+</head>
+<body>
+
+<!-- Upload Screen -->
+<div id="uploadScreen">
+  <div class="logo">⚙ IRON MAN<br>SUIT-UP</div>
+  <div class="sub">STARK INDUSTRIES · MARK L SYSTEM</div>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">📸</div>
+    <p>APNI PHOTO YAHAN<br>DROP KARO<br><span style="font-size:11px;opacity:0.5">ya click karke select karo</span></p>
+  </div>
+  <input type="file" id="fileInput" accept="image/*">
+
+  <button class="start-btn" id="startBtn">⚡ SUIT UP KARO</button>
+</div>
+
+<!-- Transform Screen -->
+<div id="transformScreen">
+  <canvas id="c"></canvas>
+  <div id="statusBar">
+    <div id="statusText">INITIALIZING...</div>
+    <div id="progressWrap"><div id="progressFill"></div></div>
+    <div id="pctText">0%</div>
+    <button id="saveBtn">💾 SAVE</button>
+    <button id="replayBtn">↺ REPLAY</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// UPLOAD
+// ─────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const startBtn = document.getElementById('startBtn');
+let userImg = null;
+
+dropZone.addEventListener('click', () => fileInput.click());
+['dragover','dragenter'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.style.borderColor='#c8901a'; }));
+['dragleave','dragend'].forEach(e => dropZone.addEventListener(e, () => { dropZone.style.borderColor=''; }));
+dropZone.addEventListener('drop', ev => { ev.preventDefault(); if(ev.dataTransfer.files[0]) loadFile(ev.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      userImg = img;
+      dropZone.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;
+      startBtn.style.display = 'block';
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+startBtn.addEventListener('click', () => {
+  document.getElementById('uploadScreen').style.display = 'none';
+  document.getElementById('transformScreen').style.display = 'block';
+  startSuitUp();
+});
+document.getElementById('replayBtn').addEventListener('click', () => {
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('replayBtn').style.display = 'none';
+  startSuitUp();
+});
+
+// ─────────────────────────────────────────────
+// CANVAS ENGINE
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, scaleX, scaleY;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight - 48; // leave bottom bar
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─────────────────────────────────────────────
+// MATH HELPERS
+// ─────────────────────────────────────────────
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const remap = (v,lo,hi,a,b) => clamp((v-lo)/(hi-lo),0,1)*(b-a)+a;
+function ease(t) { return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+function easeOut(t) { return 1-Math.pow(1-t,4); }
+function easeIn(t) { return t*t*t; }
+
+// ─────────────────────────────────────────────
+// 3D METALLIC COLORS
+// ─────────────────────────────────────────────
+// Iron Man Mark III / classic colors
+const RED_DARK   = '#5a0000';
+const RED_MID    = '#990000';
+const RED_BASE   = '#cc1111';
+const RED_LIGHT  = '#ff3333';
+const RED_SHINE  = '#ff8866';
+const GOLD_DARK  = '#7a5500';
+const GOLD_MID   = '#b07800';
+const GOLD_BASE  = '#d4a017';
+const GOLD_LIGHT = '#f5c842';
+const GOLD_SHINE = '#fff0a0';
+const ARC_BLUE   = '#00d4ff';
+const ARC_GLOW   = 'rgba(0,212,255,0.8)';
+
+// Create a metallic gradient for a panel
+function metalGrad(x,y,w,h, dark, mid, base, lite, shine, angle=0) {
+  let g;
+  if(angle===0) g = ctx.createLinearGradient(x,y,x+w,y);
+  else if(angle===90) g = ctx.createLinearGradient(x,y,x,y+h);
+  else { g = ctx.createLinearGradient(x,y,x+w*0.7,y+h); }
+  g.addColorStop(0,    dark);
+  g.addColorStop(0.2,  mid);
+  g.addColorStop(0.45, base);
+  g.addColorStop(0.6,  lite);
+  g.addColorStop(0.78, base);
+  g.addColorStop(0.9,  mid);
+  g.addColorStop(1,    dark);
+  return g;
+}
+
+function redGrad(x,y,w,h,a=0) {
+  return metalGrad(x,y,w,h,RED_DARK,RED_MID,RED_BASE,RED_LIGHT,RED_SHINE,a);
+}
+function goldGrad(x,y,w,h,a=0) {
+  return metalGrad(x,y,w,h,GOLD_DARK,GOLD_MID,GOLD_BASE,GOLD_LIGHT,GOLD_SHINE,a);
+}
+
+// ─────────────────────────────────────────────
+// PHOTO MAPPING
+// ─────────────────────────────────────────────
+// We draw the photo and map body regions proportionally.
+// Regions (as fraction of photo height from top):
+// head:    0    → 0.14
+// neck:    0.14 → 0.18
+// torso:   0.18 → 0.50
+// pelvis:  0.50 → 0.60
+// thigh:   0.60 → 0.75
+// shin:    0.75 → 0.88
+// foot:    0.88 → 1.00
+//
+// And width: shoulder = outer 20%, arm = 15% each side
+
+let photoX, photoY, photoW, photoH; // drawn photo rect
+
+function setupPhoto() {
+  if(!userImg) return;
+  const asp = userImg.width / userImg.height;
+  const cAsp = W / (H * 0.92);
+  if(asp > cAsp) {
+    photoW = W;
+    photoH = W / asp;
+  } else {
+    photoH = H * 0.92;
+    photoW = photoH * asp;
+  }
+  photoX = (W - photoW) / 2;
+  photoY = (H * 0.92 - photoH) / 2;
+}
+
+// Convert body-fraction (0-1 vertical, 0-1 horizontal) to canvas coords
+function bx(fx) { return photoX + fx * photoW; }
+function by(fy) { return photoY + fy * photoH; }
+function bw(fw) { return fw * photoW; }
+function bh(fh) { return fh * photoH; }
+
+// ─────────────────────────────────────────────
+// DRAW PHOTO
+// ─────────────────────────────────────────────
+function drawPhoto(alpha, desatAmt=0, darkAmt=0) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if(desatAmt>0||darkAmt>0) {
+    ctx.filter = `saturate(${(1-desatAmt)*100}%) brightness(${(1-darkAmt*0.4)*100}%)`;
+  }
+  ctx.drawImage(userImg, photoX, photoY, photoW, photoH);
+  ctx.filter='none';
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// ARMOR PANEL DRAWING FUNCTIONS
+// Each takes a progress t (0→1) and draws panel
+// sliding/assembling onto the body
+// ─────────────────────────────────────────────
+
+// Helper: draw rounded panel with 3D shading + rivet dots
+function panel(x,y,w,h,fillStyle,strokeStyle,alpha=1,rx=4) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = fillStyle;
+  ctx.strokeStyle = strokeStyle||GOLD_BASE;
+  ctx.lineWidth = 1.2;
+  ctx.shadowColor='rgba(0,0,0,0.7)';
+  ctx.shadowBlur=8;
+  ctx.shadowOffsetX=2;
+  ctx.shadowOffsetY=3;
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,rx);
+  ctx.fill();
+  ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
+  ctx.stroke();
+  // Shine streak
+  ctx.globalAlpha = alpha * 0.25;
+  const shine = ctx.createLinearGradient(x,y,x+w*0.6,y+h*0.3);
+  shine.addColorStop(0,'white');
+  shine.addColorStop(1,'transparent');
+  ctx.fillStyle = shine;
+  ctx.beginPath(); ctx.roundRect(x+2,y+2,w*0.55,h*0.35,rx); ctx.fill();
+  ctx.restore();
+}
+
+// Slide from offscreen — dir: 'left','right','top','bottom', dist in px
+function slidingPanel(t, x,y,w,h, fillStyle,strokeStyle, dir, rx=4) {
+  const p = easeOut(t);
+  let dx=0, dy=0;
+  const dist = dir==='left'?-w-50 : dir==='right'?w+50 : dir==='top'?-h-50 : h+50;
+  if(dir==='left'||dir==='right') dx = dist*(1-p);
+  else dy = dist*(1-p);
+  ctx.save();
+  ctx.beginPath();
+  // clip to canvas area
+  ctx.rect(0,0,W,H);
+  ctx.clip();
+  panel(x+dx, y+dy, w,h, fillStyle,strokeStyle, Math.min(t*2,1), rx);
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// BOOT (foot armor) — slides up from below
+// ─────────────────────────────────────────────
+function drawBoots(t) {
+  const p = easeOut(t);
+  // Left boot
+  const lbx = bx(0.28), lby = by(0.87), lbw = bw(0.18), lbh = bh(0.10);
+  const slide = (1-p)*(lbh+40);
+  // Boot main
+  panel(lbx, lby+slide, lbw, lbh, goldGrad(lbx,lby,lbw,lbh), GOLD_DARK, Math.min(t*2,1), 5);
+  // Boot toe
+  panel(lbx+lbw*0.05, lby+lbh*0.55+slide, lbw*0.9, lbh*0.5, redGrad(lbx,lby,lbw,lbh/2), RED_DARK, Math.min(t*2,1), 6);
+  // Boot ankle
+  panel(lbx+lbw*0.1, lby-lbh*0.15+slide, lbw*0.8, lbh*0.2, goldGrad(lbx,lby,lbw,lbh*0.2,90), GOLD_MID, Math.min(t*2,1), 3);
+
+  // Right boot
+  const rbx = bx(0.54), rby = lby, rbw = lbw, rbh = lbh;
+  panel(rbx, rby+slide, rbw, rbh, goldGrad(rbx,rby,rbw,rbh), GOLD_DARK, Math.min(t*2,1), 5);
+  panel(rbx+rbw*0.05, rby+rbh*0.55+slide, rbw*0.9, rbh*0.5, redGrad(rbx,rby,rbw,rbh/2), RED_DARK, Math.min(t*2,1), 6);
+  panel(rbx+rbw*0.1, rby-rbh*0.15+slide, rbw*0.8, rbh*0.2, goldGrad(rbx,rby,rbw,rbh*0.2,90), GOLD_MID, Math.min(t*2,1), 3);
+
+  // Repulsor glow
+  if(t>0.7) {
+    drawRepulsor(lbx+lbw/2, lby+lbh+slide+4, remap(t,0.7,1,0,1));
+    drawRepulsor(rbx+rbw/2, rby+rbh+slide+4, remap(t,0.7,1,0,1));
+  }
+}
+
+// ─────────────────────────────────────────────
+// SHIN GUARDS — slide from sides
+// ─────────────────────────────────────────────
+function drawShins(t) {
+  const p = easeOut(t);
+  const lsx = bx(0.25), lsy = by(0.74), lsw = bw(0.22), lsh = bh(0.14);
+  const rsx = bx(0.53), rsy = lsy, rsw = lsw, rsh = lsh;
+  const slideL = -(1-p)*(lsw+60);
+  const slideR =  (1-p)*(rsw+60);
+
+  // Left shin
+  panel(lsx+slideL, lsy, lsw, lsh, redGrad(lsx,lsy,lsw,lsh,45), RED_DARK, Math.min(t*2,1), 5);
+  panel(lsx+lsw*0.1+slideL, lsy+lsh*0.15, lsw*0.8, lsh*0.4, goldGrad(lsx,lsy,lsw*0.8,lsh*0.4,90), GOLD_DARK, Math.min(t*1.5,1)*0.9, 3);
+  // ridge detail
+  panel(lsx+lsw*0.35+slideL, lsy, lsw*0.3, lsh, redGrad(lsx,lsy,lsw*0.3,lsh), RED_MID, Math.min(t*2,1)*0.7, 3);
+
+  // Right shin
+  panel(rsx+slideR, rsy, rsw, rsh, redGrad(rsx,rsy,rsw,rsh,45), RED_DARK, Math.min(t*2,1), 5);
+  panel(rsx+rsw*0.1+slideR, rsy+rsh*0.15, rsw*0.8, rsh*0.4, goldGrad(rsx,rsy,rsw*0.8,rsh*0.4,90), GOLD_DARK, Math.min(t*1.5,1)*0.9, 3);
+  panel(rsx+rsw*0.35+slideR, rsy, rsw*0.3, rsh, redGrad(rsx,rsy,rsw*0.3,rsh), RED_MID, Math.min(t*2,1)*0.7, 3);
+}
+
+// ─────────────────────────────────────────────
+// THIGH PLATES — slide from sides
+// ─────────────────────────────────────────────
+function drawThighs(t) {
+  const p = easeOut(t);
+  const ltx = bx(0.22), lty = by(0.59), ltw = bw(0.25), lth = bh(0.16);
+  const rtx = bx(0.53), rty = lty, rtw = ltw, rth = lth;
+  const slideL = -(1-p)*(ltw+60);
+  const slideR =  (1-p)*(rtw+60);
+
+  panel(ltx+slideL, lty, ltw, lth, redGrad(ltx,lty,ltw,lth), RED_DARK, Math.min(t*2,1), 7);
+  panel(ltx+ltw*0.15+slideL, lty+lth*0.1, ltw*0.7, lth*0.5, goldGrad(ltx,lty,ltw*0.7,lth*0.5,90), GOLD_DARK, Math.min(t*1.5,1)*0.85, 4);
+
+  panel(rtx+slideR, rty, rtw, rth, redGrad(rtx,rty,rtw,rth), RED_DARK, Math.min(t*2,1), 7);
+  panel(rtx+rtw*0.15+slideR, rty+rth*0.1, rtw*0.7, rth*0.5, goldGrad(rtx,rty,rtw*0.7,rth*0.5,90), GOLD_DARK, Math.min(t*1.5,1)*0.85, 4);
+}
+
+// ─────────────────────────────────────────────
+// PELVIS / WAIST
+// ─────────────────────────────────────────────
+function drawPelvis(t) {
+  const p = easeOut(t);
+  const px2 = bx(0.28), py2 = by(0.52), pw2 = bw(0.44), ph2 = bh(0.08);
+  const slide = (1-p)*(ph2+30);
+  panel(px2, py2+slide, pw2, ph2, goldGrad(px2,py2,pw2,ph2), GOLD_DARK, Math.min(t*2,1), 4);
+  // Side hip plates
+  panel(bx(0.18), py2+ph2*0.2+slide, bw(0.12), ph2*1.4, redGrad(bx(0.18),py2,bw(0.12),ph2*1.4), RED_DARK, Math.min(t*2,1), 5);
+  panel(bx(0.70), py2+ph2*0.2+slide, bw(0.12), ph2*1.4, redGrad(bx(0.70),py2,bw(0.12),ph2*1.4), RED_DARK, Math.min(t*2,1), 5);
+}
+
+// ─────────────────────────────────────────────
+// CHEST / TORSO — two halves close from sides
+// ─────────────────────────────────────────────
+function drawChest(t) {
+  const p = easeOut(t);
+  const cx2 = bx(0.5);
+  const ty = by(0.18), tw = bw(0.54), th = bh(0.34);
+  const tx = cx2 - tw/2;
+
+  // Left half slides from left
+  const slideL = -(1-p)*(tw/2+80);
+  // Right half slides from right
+  const slideR = (1-p)*(tw/2+80);
+
+  ctx.save();
+  // Clip each half so they meet at center
+  // Left chest
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,ty,cx2,th+by(0.18)-ty+bh(0.34)); ctx.clip();
+  panel(tx+slideL, ty, tw, th, redGrad(tx,ty,tw,th), RED_DARK, Math.min(t*2,1), 8);
+  ctx.restore();
+
+  // Right chest
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cx2,ty,W-cx2,th+by(0.18)-ty+bh(0.34)); ctx.clip();
+  panel(tx+slideR, ty, tw, th, redGrad(tx,ty,tw,th), RED_DARK, Math.min(t*2,1), 8);
+  ctx.restore();
+
+  // Center sternum gold strip
+  if(t>0.5) {
+    const stp = remap(t,0.5,1,0,1);
+    panel(cx2-bw(0.04), ty+th*0.05, bw(0.08), th*0.9, goldGrad(cx2,ty,bw(0.08),th*0.9,90), GOLD_DARK, Math.min(stp*2,1), 3);
+  }
+
+  // Chest detail panels (abs-like sections)
+  if(t>0.6) {
+    const dp = remap(t,0.6,1,0,1);
+    for(let i=0;i<3;i++) {
+      const py2 = ty + th*0.3 + i*th*0.22;
+      panel(tx+tw*0.12+slideL*0.2, py2, tw*0.35, th*0.16, redGrad(tx,py2,tw*0.35,th*0.16), RED_MID, dp*0.6, 3);
+      panel(cx2+tw*0.02+slideR*0.2, py2, tw*0.35, th*0.16, redGrad(cx2,py2,tw*0.35,th*0.16), RED_MID, dp*0.6, 3);
+    }
+  }
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// ARC REACTOR
+// ─────────────────────────────────────────────
+function drawArcReactor(t, elapsed) {
+  const p = easeOut(t);
+  const cx2 = bx(0.5), cy2 = by(0.31);
+  const r = bw(0.08) * p;
+  const pulse = 1 + Math.sin(elapsed*0.006)*0.08*t;
+
+  ctx.save();
+  ctx.globalAlpha = Math.min(t*1.5,1);
+
+  // Outer glow
+  ctx.shadowColor = ARC_BLUE;
+  ctx.shadowBlur = 30*t;
+
+  // Outer ring
+  ctx.strokeStyle = ARC_BLUE;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, r*pulse, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Inner fill
+  const ag = ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,r*pulse);
+  ag.addColorStop(0,'rgba(255,255,255,0.95)');
+  ag.addColorStop(0.3,ARC_BLUE);
+  ag.addColorStop(0.7,'rgba(0,100,200,0.5)');
+  ag.addColorStop(1,'rgba(0,212,255,0.05)');
+  ctx.fillStyle=ag;
+  ctx.beginPath();
+  ctx.arc(cx2,cy2,r*pulse,0,Math.PI*2);
+  ctx.fill();
+
+  // Hexagon inner rings
+  if(t>0.5) {
+    const ht = remap(t,0.5,1,0,1);
+    ctx.globalAlpha = ht;
+    ctx.strokeStyle='rgba(255,255,255,0.7)';
+    ctx.lineWidth=1;
+    ctx.shadowBlur=10;
+    for(let ring=1;ring<=2;ring++) {
+      ctx.beginPath();
+      for(let i=0;i<6;i++) {
+        const a = i/6*Math.PI*2 - Math.PI/6;
+        const rr = r*pulse*(ring===1?0.45:0.75);
+        i===0?ctx.moveTo(cx2+Math.cos(a)*rr,cy2+Math.sin(a)*rr):ctx.lineTo(cx2+Math.cos(a)*rr,cy2+Math.sin(a)*rr);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+  }
+
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// ARMS — upper arm + forearm + gauntlet
+// ─────────────────────────────────────────────
+function drawArms(t) {
+  const p = easeOut(t);
+  // Left upper arm
+  const lux = bx(0.08), luy = by(0.20), luw = bw(0.17), luh = bh(0.18);
+  const slideL = -(1-p)*(luw+80);
+
+  panel(lux+slideL, luy, luw, luh, redGrad(lux,luy,luw,luh), RED_DARK, Math.min(t*2,1), 8);
+  // shoulder curve at top
+  panel(lux+slideL, luy-luh*0.1, luw, luh*0.15, goldGrad(lux,luy,luw,luh*0.15,90), GOLD_DARK, Math.min(t*2,1)*0.8, 5);
+
+  // Left forearm
+  const lfx = bx(0.10), lfy = by(0.38), lfw = bw(0.15), lfh = bh(0.16);
+  panel(lfx+slideL*0.7, lfy, lfw, lfh, redGrad(lfx,lfy,lfw,lfh), RED_DARK, Math.min(t*2,1), 5);
+  panel(lfx+lfw*0.1+slideL*0.7, lfy+lfh*0.1, lfw*0.8, lfh*0.35, goldGrad(lfx,lfy,lfw*0.8,lfh*0.35,90), GOLD_DARK, Math.min(t*1.8,1)*0.8, 3);
+
+  // Left gauntlet
+  if(t>0.6) {
+    const gt = remap(t,0.6,1,0,1);
+    const lgx=bx(0.12),lgy=by(0.54);
+    panel(lgx+slideL*0.4, lgy, bw(0.12), bh(0.05), goldGrad(lgx,lgy,bw(0.12),bh(0.05)), GOLD_DARK, gt, 4);
+  }
+
+  // RIGHT side
+  const rux = bx(0.75), ruy = luy, ruw = luw, ruh = luh;
+  const slideR = (1-p)*(ruw+80);
+
+  panel(rux+slideR, ruy, ruw, ruh, redGrad(rux,ruy,ruw,ruh), RED_DARK, Math.min(t*2,1), 8);
+  panel(rux+slideR, ruy-ruh*0.1, ruw, ruh*0.15, goldGrad(rux,ruy,ruw,ruh*0.15,90), GOLD_DARK, Math.min(t*2,1)*0.8, 5);
+
+  const rfx = bx(0.75), rfy = lfy, rfw = lfw, rfh = lfh;
+  panel(rfx+slideR*0.7, rfy, rfw, rfh, redGrad(rfx,rfy,rfw,rfh), RED_DARK, Math.min(t*2,1), 5);
+  panel(rfx+rfw*0.1+slideR*0.7, rfy+rfh*0.1, rfw*0.8, rfh*0.35, goldGrad(rfx,rfy,rfw*0.8,rfh*0.35,90), GOLD_DARK, Math.min(t*1.8,1)*0.8, 3);
+
+  if(t>0.6) {
+    const gt = remap(t,0.6,1,0,1);
+    const rgx=bx(0.76),rgy=by(0.54);
+    panel(rgx+slideR*0.4, rgy, bw(0.12), bh(0.05), goldGrad(rgx,rgy,bw(0.12),bh(0.05)), GOLD_DARK, gt, 4);
+  }
+
+  // Repulsors on palms
+  if(t>0.75) {
+    const rt = remap(t,0.75,1,0,1);
+    drawRepulsor(bx(0.17)+slideL*0.2, by(0.57), rt);
+    drawRepulsor(bx(0.82)+slideR*0.2, by(0.57), rt);
+  }
+}
+
+// ─────────────────────────────────────────────
+// SHOULDER PAULDRONS — drop from above
+// ─────────────────────────────────────────────
+function drawShoulders(t) {
+  const p = easeOut(t);
+  const slide = -(1-p)*(bh(0.12)+60);
+
+  // Left shoulder
+  const lsx2 = bx(0.06), lsy2 = by(0.16), lsw2 = bw(0.20), lsh2 = bh(0.10);
+  ctx.save();
+  ctx.globalAlpha = Math.min(t*2,1);
+  ctx.fillStyle = redGrad(lsx2,lsy2+slide,lsw2,lsh2);
+  ctx.strokeStyle = GOLD_MID; ctx.lineWidth=1.5;
+  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=10; ctx.shadowOffsetX=3; ctx.shadowOffsetY=4;
+  // Curved pauldron shape
+  ctx.beginPath();
+  ctx.moveTo(lsx2+lsw2*0.1, lsy2+lsh2+slide);
+  ctx.lineTo(lsx2, lsy2+lsh2*0.4+slide);
+  ctx.quadraticCurveTo(lsx2, lsy2+slide, lsx2+lsw2*0.2, lsy2+slide);
+  ctx.lineTo(lsx2+lsw2*0.85, lsy2+slide);
+  ctx.quadraticCurveTo(lsx2+lsw2, lsy2+lsh2*0.2+slide, lsx2+lsw2*0.95, lsy2+lsh2*0.7+slide);
+  ctx.lineTo(lsx2+lsw2*0.5, lsy2+lsh2+slide);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // Shine
+  ctx.globalAlpha=0.2;
+  const sg = ctx.createLinearGradient(lsx2,lsy2+slide,lsx2+lsw2*0.7,lsy2+lsh2*0.4+slide);
+  sg.addColorStop(0,'white'); sg.addColorStop(1,'transparent');
+  ctx.fillStyle=sg;
+  ctx.beginPath();
+  ctx.moveTo(lsx2+lsw2*0.1,lsy2+lsh2*0.1+slide);
+  ctx.lineTo(lsx2+lsw2*0.7,lsy2+slide);
+  ctx.lineTo(lsx2+lsw2*0.9,lsy2+lsh2*0.4+slide);
+  ctx.lineTo(lsx2+lsw2*0.2,lsy2+lsh2*0.6+slide);
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0; ctx.restore();
+
+  // Right shoulder
+  const rsx2 = bx(0.74), rsy2 = lsy2, rsw2 = lsw2, rsh2 = lsh2;
+  ctx.save();
+  ctx.globalAlpha = Math.min(t*2,1);
+  ctx.fillStyle = redGrad(rsx2,rsy2+slide,rsw2,rsh2);
+  ctx.strokeStyle = GOLD_MID; ctx.lineWidth=1.5;
+  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=10; ctx.shadowOffsetX=-3; ctx.shadowOffsetY=4;
+  ctx.beginPath();
+  ctx.moveTo(rsx2+rsw2*0.9, rsy2+rsh2+slide);
+  ctx.lineTo(rsx2+rsw2, rsy2+rsh2*0.4+slide);
+  ctx.quadraticCurveTo(rsx2+rsw2, rsy2+slide, rsx2+rsw2*0.8, rsy2+slide);
+  ctx.lineTo(rsx2+rsw2*0.15, rsy2+slide);
+  ctx.quadraticCurveTo(rsx2, rsy2+rsh2*0.2+slide, rsx2+rsw2*0.05, rsy2+rsh2*0.7+slide);
+  ctx.lineTo(rsx2+rsw2*0.5, rsy2+rsh2+slide);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// HELMET — drops from above, faceplate closes
+// ─────────────────────────────────────────────
+function drawHelmet(t, elapsed) {
+  const p = easeOut(t);
+  const cx2 = bx(0.5);
+  const hy = by(0.01), hh = bh(0.16), hw = bw(0.38);
+  const hx = cx2 - hw/2;
+  const slide = -(1-p)*( hh + 80);
+
+  ctx.save();
+  ctx.globalAlpha = Math.min(t*1.8,1);
+  ctx.shadowColor='rgba(0,0,0,0.9)'; ctx.shadowBlur=15; ctx.shadowOffsetX=0; ctx.shadowOffsetY=5;
+
+  // Back of helmet (darker)
+  ctx.fillStyle=redGrad(hx,hy+slide,hw,hh);
+  ctx.strokeStyle=GOLD_DARK; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(hx+hw*0.05, hy+hh*0.8+slide);
+  ctx.lineTo(hx, hy+hh*0.4+slide);
+  ctx.quadraticCurveTo(hx, hy+slide, hx+hw*0.15, hy+slide);
+  ctx.quadraticCurveTo(cx2, hy-hh*0.08+slide, hx+hw*0.85, hy+slide);
+  ctx.quadraticCurveTo(hx+hw, hy+slide, hx+hw, hy+hh*0.4+slide);
+  ctx.lineTo(hx+hw*0.95, hy+hh*0.8+slide);
+  ctx.quadraticCurveTo(hx+hw*0.75,hy+hh+slide, cx2, hy+hh*1.05+slide);
+  ctx.quadraticCurveTo(hx+hw*0.25,hy+hh+slide, hx+hw*0.05,hy+hh*0.8+slide);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Faceplate (closes from top)
+  if(t>0.35) {
+    const fp = remap(t,0.35,0.85,0,1);
+    const faceP = easeIn(fp);
+    const fh = hh*0.65*faceP;
+    const fy = hy + hh*0.28 + slide;
+    const fx = hx + hw*0.1;
+    const fw = hw*0.8;
+
+    ctx.fillStyle = redGrad(fx,fy,fw,fh);
+    ctx.strokeStyle = GOLD_MID; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(fx+fw*0.05, fy+fh);
+    ctx.lineTo(fx, fy+fh*0.3);
+    ctx.lineTo(fx+fw*0.15, fy);
+    ctx.lineTo(fx+fw*0.85, fy);
+    ctx.lineTo(fx+fw, fy+fh*0.3);
+    ctx.lineTo(fx+fw*0.95, fy+fh);
+    ctx.lineTo(cx2+fw*0.12, fy+fh);
+    ctx.lineTo(cx2-fw*0.12, fy+fh);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Chin crease
+    ctx.strokeStyle=RED_DARK; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx2-fw*0.1,fy+fh*0.6); ctx.lineTo(cx2+fw*0.1,fy+fh*0.6); ctx.stroke();
+  }
+
+  // Eye slots — glow when helmet full
+  if(t>0.75) {
+    const et = remap(t,0.75,1,0,1);
+    const eyeY = hy + hh*0.38 + slide;
+    const eyeW = hw*0.22, eyeH = hh*0.085;
+
+    // Left eye
+    ctx.save();
+    ctx.globalAlpha = et;
+    ctx.shadowColor=ARC_BLUE; ctx.shadowBlur=25*et;
+    ctx.fillStyle=ARC_BLUE;
+    ctx.beginPath();
+    ctx.ellipse(cx2 - hw*0.18, eyeY, eyeW*0.5, eyeH, 0.25, 0, Math.PI*2);
+    ctx.fill();
+    // inner white
+    ctx.fillStyle='white'; ctx.shadowBlur=8;
+    ctx.beginPath();
+    ctx.ellipse(cx2 - hw*0.18, eyeY, eyeW*0.28, eyeH*0.6, 0.25, 0, Math.PI*2);
+    ctx.fill();
+
+    // Right eye
+    ctx.fillStyle=ARC_BLUE; ctx.shadowBlur=25*et;
+    ctx.beginPath();
+    ctx.ellipse(cx2 + hw*0.18, eyeY, eyeW*0.5, eyeH, -0.25, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='white'; ctx.shadowBlur=8;
+    ctx.beginPath();
+    ctx.ellipse(cx2 + hw*0.18, eyeY, eyeW*0.28, eyeH*0.6, -0.25, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur=0; ctx.restore();
+
+    // Eye flicker
+    if(Math.sin(elapsed*0.05)>0.95 && et<0.9) {
+      ctx.globalAlpha=0.3; ctx.fillStyle='white';
+      ctx.fillRect(hx,hy+slide,hw,hh);
+    }
+  }
+
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// REPULSOR GLOW
+// ─────────────────────────────────────────────
+function drawRepulsor(x, y, t) {
+  if(t<=0) return;
+  const r = bw(0.04)*t;
+  ctx.save();
+  ctx.shadowColor=ARC_BLUE; ctx.shadowBlur=30*t;
+  const g = ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,1)');
+  g.addColorStop(0.2,ARC_BLUE);
+  g.addColorStop(0.6,'rgba(0,100,200,0.4)');
+  g.addColorStop(1,'rgba(0,212,255,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// SPARKS
+// ─────────────────────────────────────────────
+function drawSparks(p, elapsed) {
+  // Where is assembly happening?
+  let sy2;
+  if(p<0.20) sy2 = by(0.92);
+  else if(p<0.35) sy2 = by(0.80);
+  else if(p<0.50) sy2 = by(0.65);
+  else if(p<0.62) sy2 = by(0.52);
+  else if(p<0.72) sy2 = by(0.38);
+  else if(p<0.82) sy2 = by(0.25);
+  else sy2 = by(0.08);
+
+  const seed = Math.floor(elapsed/40);
+  for(let i=0;i<8;i++) {
+    const h1 = Math.sin(seed*127.1+i*311.7)*43758.5453;
+    const h2 = Math.sin(seed*269.5+i*183.3)*43758.5453;
+    const h3 = Math.sin(seed*113.5+i*90.1)*43758.5453;
+    const h4 = Math.sin(seed*57.3+i*443.7)*43758.5453;
+    const rx2 = bx(0.2) + (h1-Math.floor(h1))*bw(0.6);
+    const ry2 = sy2 + (h2-Math.floor(h2))*50-25;
+    const sr2 = (h3-Math.floor(h3))*3+0.8;
+    const isGold = (h4-Math.floor(h4))>0.5;
+    ctx.save();
+    ctx.fillStyle = isGold ? GOLD_LIGHT : '#ffffff';
+    ctx.shadowColor = isGold ? GOLD_BASE : ARC_BLUE;
+    ctx.shadowBlur=10;
+    ctx.globalAlpha=0.85;
+    ctx.beginPath(); ctx.arc(rx2,ry2,sr2,0,Math.PI*2); ctx.fill();
+    // spark trail
+    ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=0.7; ctx.globalAlpha=0.4;
+    ctx.beginPath();
+    const h5=Math.sin(seed*201.3+i*77.1)*43758.5;
+    ctx.moveTo(rx2,ry2);
+    ctx.lineTo(rx2+(h5-Math.floor(h5))*14-7, ry2-8);
+    ctx.stroke();
+    ctx.shadowBlur=0; ctx.restore();
+  }
+}
+
+// ─────────────────────────────────────────────
+// FINAL ENERGY PULSE
+// ─────────────────────────────────────────────
+function drawEnergyPulse(t, elapsed) {
+  const pulse = 0.7+Math.sin(elapsed*0.005)*0.3;
+  // Red glow across body
+  const g = ctx.createRadialGradient(bx(0.5),by(0.45),0,bx(0.5),by(0.45),photoW*0.6);
+  g.addColorStop(0,`rgba(200,0,0,${t*0.15*pulse})`);
+  g.addColorStop(0.5,`rgba(139,0,0,${t*0.08})`);
+  g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // Edge border glow
+  ctx.save();
+  ctx.strokeStyle=`rgba(200,144,26,${t*0.7*pulse})`;
+  ctx.lineWidth=3;
+  ctx.shadowColor=GOLD_BASE; ctx.shadowBlur=20;
+  ctx.strokeRect(4,4,W-8,H-8);
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+// HUD overlay
+function drawHUD(p) {
+  ctx.save();
+  ctx.globalAlpha=Math.min(p*5,0.5);
+  ctx.strokeStyle='rgba(0,212,255,0.7)'; ctx.lineWidth=1;
+  // Corner marks
+  const m=22;
+  [[4,4,1,1],[W-4,4,-1,1],[4,H-4,1,-1],[W-4,H-4,-1,-1]].forEach(([x,y,dx,dy])=>{
+    ctx.beginPath();
+    ctx.moveTo(x+dx*m,y); ctx.lineTo(x,y); ctx.lineTo(x,y+dy*m); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+// ANIMATION LOOP
+// ─────────────────────────────────────────────
+const TOTAL = 9500; // 9.5 seconds
+
+let startTime=null, rafId=null;
+let chunks=[], recorder=null;
+
+function startSuitUp() {
+  if(rafId) cancelAnimationFrame(rafId);
+  setupPhoto();
+  chunks=[];
+  const stream = canvas.captureStream(30);
+  try {
+    recorder = new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9'});
+  } catch(e) {
+    recorder = new MediaRecorder(stream);
+  }
+  recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const url=URL.createObjectURL(blob);
+    document.getElementById('saveBtn').style.display='block';
+    document.getElementById('saveBtn').onclick=()=>{
+      const a=document.createElement('a');a.href=url;a.download='ironman-suitup.webm';a.click();
+    };
+    document.getElementById('replayBtn').style.display='block';
+  };
+  recorder.start();
+  startTime=null;
+  rafId=requestAnimationFrame(loop);
+}
+
+function setStatus(txt) { document.getElementById('statusText').textContent=txt; }
+
+function loop(ts) {
+  if(!startTime) startTime=ts;
+  const elapsed=ts-startTime;
+  const p=Math.min(elapsed/TOTAL,1);
+
+  document.getElementById('progressFill').style.width=(p*100)+'%';
+  document.getElementById('pctText').textContent=Math.floor(p*100)+'%';
+
+  // Status messages
+  if(p<0.10) setStatus('SCANNING TARGET...');
+  else if(p<0.22) setStatus('DEPLOYING NANO BOOTS...');
+  else if(p<0.37) setStatus('SHIN ARMOR LOCKING...');
+  else if(p<0.50) setStatus('THIGH PLATES ASSEMBLING...');
+  else if(p<0.60) setStatus('TORSO ENCLOSURE ACTIVE...');
+  else if(p<0.68) setStatus('ARC REACTOR ONLINE...');
+  else if(p<0.78) setStatus('ARM REPULSORS LOADING...');
+  else if(p<0.87) setStatus('SHOULDER PAULDRONS LOCKED...');
+  else if(p<0.97) setStatus('HELMET DEPLOYMENT SEQUENCE...');
+  else setStatus('⚡ MARK L FULLY OPERATIONAL — I AM IRON MAN');
+
+  // ── RENDER ──
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,W,H);
+
+  // Photo
+  const desatAmt = p>0.3 ? remap(p,0.3,0.9,0,0.7) : 0;
+  const darkAmt  = p>0.3 ? remap(p,0.3,0.9,0,0.3) : 0;
+  drawPhoto(1, desatAmt, darkAmt);
+
+  // Scan effect
+  if(p<0.12) {
+    const sy2 = remap(p,0,0.12,0,1)*H;
+    const sg = ctx.createLinearGradient(0,sy2-20,0,sy2+20);
+    sg.addColorStop(0,'transparent');
+    sg.addColorStop(0.5,'rgba(0,212,255,0.4)');
+    sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg; ctx.fillRect(0,sy2-20,W,40);
+    ctx.strokeStyle='rgba(0,212,255,0.9)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,sy2); ctx.lineTo(W,sy2); ctx.stroke();
+  }
+
+  // Armor layers — bottom to top
+  if(p>0.10) drawBoots(remap(p,0.10,0.28,0,1));
+  if(p>0.22) drawShins(remap(p,0.22,0.40,0,1));
+  if(p>0.36) drawThighs(remap(p,0.36,0.52,0,1));
+  if(p>0.48) drawPelvis(remap(p,0.48,0.60,0,1));
+  if(p>0.54) drawChest(remap(p,0.54,0.70,0,1));
+  if(p>0.62) drawArcReactor(remap(p,0.62,0.78,0,1), elapsed);
+  if(p>0.65) drawArms(remap(p,0.65,0.80,0,1));
+  if(p>0.76) drawShoulders(remap(p,0.76,0.88,0,1));
+  if(p>0.85) drawHelmet(remap(p,0.85,0.99,0,1), elapsed);
+  if(p>0.96) drawEnergyPulse(remap(p,0.96,1,0,1), elapsed);
+
+  // Sparks during assembly
+  if(p>0.10 && p<0.97) drawSparks(p, elapsed);
+
+  // HUD corners
+  drawHUD(p);
+
+  if(p<1) {
+    rafId=requestAnimationFrame(loop);
+  } else {
+    setTimeout(()=>{
+      recorder.stop();
+      setStatus('⚡ MARK L FULLY OPERATIONAL — I AM IRON MAN');
+    },500);
+  }
+}
+</script>
+</body>
+</html>
